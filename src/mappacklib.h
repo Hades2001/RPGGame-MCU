@@ -34,4 +34,7 @@ extern const uint8_t map_World_A2data[768][1152];
 extern const uint8_t map_World_Bdata[1024][1152];
 extern const uint8_t map_World_Cdata[1024][1152];
 
+extern uint8_t *mapliblist[31];
+extern int mapgroupbuff[6][8];
+
 #endif

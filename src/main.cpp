@@ -39,10 +39,12 @@ void setup()
 
     Serial.println("Init Wifi");
 
-    Disbuff.pushImage(0,0,24,24, (uint16_t*)map_Dungeon_A1data[0]);
-    Disbuff.pushImage(24,0,24,24, (uint16_t*)map_Dungeon_A1data[1]);
-    Disbuff.pushImage(48,0,24,24, (uint16_t*)map_Dungeon_A1data[2]);
-    Disbuff.pushImage(72,0,24,24, (uint16_t*)map_Dungeon_A1data[3]);
+    uint8_t (*mapptr)[1152] = (uint8_t (*)[1152])mapliblist[mapgroupbuff[2][1]];
+
+    Disbuff.pushImage(0,0,24,24, (uint16_t*)mapptr[0]);
+    Disbuff.pushImage(24,0,24,24, (uint16_t*)mapptr[1]);
+    Disbuff.pushImage(48,0,24,24, (uint16_t*)mapptr[2]);
+    Disbuff.pushImage(72,0,24,24, (uint16_t*)mapptr[3]);
     Disbuff.pushSprite(0, 0);
 
     /*
