@@ -1,0 +1,15 @@
+#define ELVES_NUM 12
+#define ELVES_W 48
+#define ELVES_H 48
+#define qw0 0
+#define qw1 1
+#define qw2 2
+#define qw3 3
+#define qw4 4
+#define qw5 5
+#define qw6 6
+#define qw7 7
+#define qw8 8
+#define qw9 9
+#define qw10 10
+#define qw11 11
