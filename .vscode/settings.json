@@ -1,6 +1,7 @@
 {
     "files.associations": {
         "algorithm": "cpp",
-        "pgmspace.h": "c"
+        "pgmspace.h": "c",
+        "mappacklib.h": "c"
     }
 }
