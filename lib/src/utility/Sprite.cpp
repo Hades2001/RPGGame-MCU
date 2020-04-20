@@ -1129,6 +1129,11 @@ void TFT_eSprite::drawPixel(int32_t x, int32_t y, uint32_t color)
   }
 }
 
+void TFT_eSprite::drawPixel16(int32_t x, int32_t y, uint16_t color)
+{
+    color = (color >> 8) | (color << 8);
+    _img[x+y*_iwidth] = color;
+}
 
 /***************************************************************************************
 ** Function name:           drawLine
