@@ -1135,6 +1135,11 @@ void TFT_eSprite::drawPixel16(int32_t x, int32_t y, uint16_t color)
     _img[x+y*_iwidth] = color;
 }
 
+uint16_t* TFT_eSprite::getBuffptr()
+{
+    return _img;
+}
+
 /***************************************************************************************
 ** Function name:           drawLine
 ** Description:             draw a line between 2 arbitrary points
