@@ -69,7 +69,7 @@ uint8_t isReady(uint8_t number)
     return readyFlag;
 }
 
-uint8_t setReady( uint8_t number, bool flag )
+void setReady( uint8_t number, bool flag )
 {
     xSemaphoreTake(xdisbuffUser, portMAX_DELAY);
     disbuff_str.drawReady[number] = flag;
@@ -80,7 +80,7 @@ uint8_t getDrawBuffNumber()
 {
     uint8_t num;
     xSemaphoreTake(xdisbuffUser, portMAX_DELAY);
-    num = ( disbuff_str.buffNumber == 1 ) ? 0 : 1;
+    num = disbuff_str.buffNumber;
     xSemaphoreGive(xdisbuffUser);
     return num;
 }
@@ -130,7 +130,6 @@ void drawdisWindows(int posx,int posy)
     }
 
     buffflag = getDrawBuffNumber();
-    //Serial.printf("Draw buff number %d \n",buffflag);
 
     uint16_t (*maplayerptr)[30] = nullptr;
 
@@ -145,28 +144,37 @@ void drawdisWindows(int posx,int posy)
             }
         }
     }
-    setDrawBuffNumber(buffflag);
+    setReady(buffflag,true);
 }
 
 void displaybuff(void *arg)
 {
     uint8_t buffflag = 0;
+    bool BusyFlag = false;
     while(1)
     {
-
         xSemaphoreTake(xdisbuffUser, 200 / portTICK_RATE_MS);
-        buffflag = disbuff_str.buffNumber;
-        disbuff_str.drawReady[buffflag] = false;
+        buffflag = ( disbuff_str.buffNumber == 1 )? 0 : 1;
         xSemaphoreGive(xdisbuffUser);
 
         disbuff_str.disclassptr[buffflag]->drawNumber(buffflag,0,0);
+        disbuff_str.disclassptr[buffflag]->drawNumber(disbuff_str.drawReady[0] == true ? 1 : 0,0,8);
+        disbuff_str.disclassptr[buffflag]->drawNumber(disbuff_str.drawReady[1] == true ? 1 : 0,0,16);
         disbuff_str.disclassptr[buffflag]->pushSprite(0,0);
         
+        while( BusyFlag == false )
+        {
+            xSemaphoreTake(xdisbuffUser, 200 / portTICK_RATE_MS);
+            disbuff_str.drawReady[buffflag] = false;
+            BusyFlag = disbuff_str.drawReady[disbuff_str.buffNumber];
+            xSemaphoreGive(xdisbuffUser);
+            delay(10);
+        }
+
         xSemaphoreTake(xdisbuffUser, 200 / portTICK_RATE_MS);
-        disbuff_str.drawReady[buffflag] = true;
+        disbuff_str.buffNumber = buffflag;
         xSemaphoreGive(xdisbuffUser);
-        
-        delay(1);
+        delay(500);
     }
 }
 
@@ -182,26 +190,31 @@ void setup()
 
     Disbuff0.createSprite(320, 240);
     Disbuff1.createSprite(320, 240);
+
     disbuff_str.disclassptr[0] = &Disbuff0;
     disbuff_str.disclassptr[1] = &Disbuff1;
     disbuff_str.displayptr[0] = Disbuff0.getBuffptr();
     disbuff_str.displayptr[1] = Disbuff1.getBuffptr();
     disbuff_str.buffNumber = 1;
     disbuff_str.disclassptr[0]->fillRect(0,0,320,240,BLUE);
-    disbuff_str.disclassptr[1]->fillRect(0,0,320,240,BLUE);
+    disbuff_str.disclassptr[1]->fillRect(0,0,320,240,RED);
     disbuff_str.disclassptr[0]->pushSprite(0,0);
     
     disbuff_str.disclassptr[0]->setSwapBytes(true);
     disbuff_str.disclassptr[1]->setSwapBytes(true);
 
-    drawMapPack(0,0,2,0x8001, 1);
+    disbuff_str.drawReady[0] = true;
+    disbuff_str.drawReady[1] = true;
+
     xdisbuffUser = xSemaphoreCreateMutex();
     
     xSemaphoreTake(xdisbuffUser, 100 / portTICK_RATE_MS);
+    xSemaphoreGive(xdisbuffUser);
+    //drawdisWindows(0,0);
 
     xTaskCreatePinnedToCore(displaybuff, "displaybuff", 1024 * 2, nullptr, 2, nullptr,0);
     //xTaskCreate(displaybuff, "displaybuff", 1024 * 2, (void *)1, 2, nullptr);
-    xSemaphoreGive(xdisbuffUser);
+
 }
 // start | select | a | b | down | right | left | up
 char bitbuff[9];
@@ -251,7 +264,7 @@ void loop()
     {
         state = 1;
     }
-    */
+    
     //if( isReady() == true );
     {
         posx += 2;
@@ -262,6 +275,6 @@ void loop()
 
     //Disbuff.pushImage(120,120,48,48,(uint16_t*)qwbuff[dir * 3 + state]);
     //Disbuff.pushSprite(0, 0);
-
+    */
     delay(1);
 }
