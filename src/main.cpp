@@ -17,7 +17,7 @@ const char *WifiPWD = "Office@888888";
 uint8_t imagedata[576];
 
 #define DISPLAY_WIDTH   320
-#define DISPLAY_HEIGHT  240
+#define DISPLAY_HEIGHT  24
 
 
 SemaphoreHandle_t xdisbuffUser = nullptr;
@@ -105,7 +105,7 @@ void drawdisWindows(int posx,int posy)
     {
         mapposx = posx / 24;
         drawRect_x = 0;
-        drawRect_w /= 24;
+        drawRect_w = drawRect_w / 24 + 1;
     }
     else
     {
@@ -119,7 +119,7 @@ void drawdisWindows(int posx,int posy)
     {
         mapposy = posy / 24;
         drawRect_y = 0;
-        drawRect_h /= 24;
+        drawRect_h = drawRect_h / 24 + 1;
     }
     else
     {
@@ -130,6 +130,8 @@ void drawdisWindows(int posx,int posy)
     }
 
     buffflag = getDrawBuffNumber();
+
+    while (isReady(buffflag) == true) delay(10);
 
     uint16_t (*maplayerptr)[30] = nullptr;
 
@@ -145,6 +147,8 @@ void drawdisWindows(int posx,int posy)
         }
     }
     setReady(buffflag,true);
+
+    
 }
 
 void displaybuff(void *arg)
@@ -153,31 +157,29 @@ void displaybuff(void *arg)
     bool BusyFlag = false;
     while(1)
     {
-        xSemaphoreTake(xdisbuffUser, 200 / portTICK_RATE_MS);
-        buffflag = ( disbuff_str.buffNumber == 1 )? 0 : 1;
+        xSemaphoreTake(xdisbuffUser, portMAX_DELAY);
+        buffflag = ( disbuff_str.buffNumber == 1 ) ? 0 : 1; 
         xSemaphoreGive(xdisbuffUser);
 
-        disbuff_str.disclassptr[buffflag]->drawNumber(buffflag,0,0);
-        disbuff_str.disclassptr[buffflag]->drawNumber(disbuff_str.drawReady[0] == true ? 1 : 0,0,8);
-        disbuff_str.disclassptr[buffflag]->drawNumber(disbuff_str.drawReady[1] == true ? 1 : 0,0,16);
+        //disbuff_str.disclassptr[buffflag]->drawNumber(buffflag,0,0);
         disbuff_str.disclassptr[buffflag]->pushSprite(0,0);
         
-        while( BusyFlag == false )
+        do
         {
-            xSemaphoreTake(xdisbuffUser, 200 / portTICK_RATE_MS);
+            xSemaphoreTake(xdisbuffUser, portMAX_DELAY);
             disbuff_str.drawReady[buffflag] = false;
             BusyFlag = disbuff_str.drawReady[disbuff_str.buffNumber];
             xSemaphoreGive(xdisbuffUser);
             delay(10);
-        }
+        } while (BusyFlag == false);
 
-        xSemaphoreTake(xdisbuffUser, 200 / portTICK_RATE_MS);
+        xSemaphoreTake(xdisbuffUser, portMAX_DELAY);
         disbuff_str.buffNumber = buffflag;
         xSemaphoreGive(xdisbuffUser);
-        delay(500);
+        delay(1);
     }
 }
-
+uint64_t time_os;
 void setup()
 {
     // put your setup code here, to run once:
@@ -197,23 +199,24 @@ void setup()
     disbuff_str.displayptr[1] = Disbuff1.getBuffptr();
     disbuff_str.buffNumber = 1;
     disbuff_str.disclassptr[0]->fillRect(0,0,320,240,BLUE);
-    disbuff_str.disclassptr[1]->fillRect(0,0,320,240,RED);
+    disbuff_str.disclassptr[1]->fillRect(0,0,320,240,BLUE);
+
     disbuff_str.disclassptr[0]->pushSprite(0,0);
     
     disbuff_str.disclassptr[0]->setSwapBytes(true);
     disbuff_str.disclassptr[1]->setSwapBytes(true);
 
-    disbuff_str.drawReady[0] = true;
-    disbuff_str.drawReady[1] = true;
+    disbuff_str.drawReady[0] = false;
+    disbuff_str.drawReady[1] = false;
 
     xdisbuffUser = xSemaphoreCreateMutex();
     
     xSemaphoreTake(xdisbuffUser, 100 / portTICK_RATE_MS);
     xSemaphoreGive(xdisbuffUser);
-    //drawdisWindows(0,0);
+    drawdisWindows(0,0);
 
     xTaskCreatePinnedToCore(displaybuff, "displaybuff", 1024 * 2, nullptr, 2, nullptr,0);
-    //xTaskCreate(displaybuff, "displaybuff", 1024 * 2, (void *)1, 2, nullptr);
+    time_os = micros();
 
 }
 // start | select | a | b | down | right | left | up
@@ -264,17 +267,19 @@ void loop()
     {
         state = 1;
     }
-    
+    */
     //if( isReady() == true );
-    {
-        posx += 2;
-        posx = ( posx > 296 ) ? 0 : posx;
-        drawdisWindows(posx,posy);
-    }
+    posx += 1;
+    posx = ( posx > 296 ) ? 0 : posx;
+    drawdisWindows(posx,posy);
+    Serial.printf("Time : %d\n",micros() - time_os);
+    
+    time_os = micros();
+    
     //Disbuff.pushSprite(0,0);
 
     //Disbuff.pushImage(120,120,48,48,(uint16_t*)qwbuff[dir * 3 + state]);
     //Disbuff.pushSprite(0, 0);
-    */
+    
     delay(1);
 }
